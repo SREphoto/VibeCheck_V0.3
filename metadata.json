@@ -1,0 +1,5 @@
+{
+  "name": "VibeCheck ver_0.2 reboot",
+  "description": "A low-latency, visually rich playground for prompt engineers to batch-test and compare Generative AI outputs across different formats (p5.js, SVG, HTML, Three.js).",
+  "requestFramePermissions": []
+}
