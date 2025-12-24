@@ -12,51 +12,49 @@ export const generateContent = async (
   mode: OutputMode,
   isThinking: boolean
 ): Promise<{ code: string | null; imageUrl: string | null; error?: string }> => {
-  
+
   try {
     // 1. Handle Image Generation Mode specifically
     if (mode === OutputMode.IMAGE) {
-      // Special handling for Imagen 4 (High Quality)
-      if (modelKey === GenModel.IMAGEN_4) {
-          const response = await ai.models.generateImages({
-            model: GenModel.IMAGEN_4,
-            prompt: prompt,
-            config: {
-              numberOfImages: 1,
-              outputMimeType: 'image/jpeg',
-              aspectRatio: '1:1',
-            },
-          });
-          const base64ImageBytes = response.generatedImages?.[0]?.image?.imageBytes;
-          if (base64ImageBytes) {
-             return { code: null, imageUrl: `data:image/jpeg;base64,${base64ImageBytes}` };
-          } else {
-             throw new Error("No image data returned from Imagen.");
-          }
-      } 
-      // Fallback to Flash Image (Fast)
+      // Nano Banana Pro (Gemini 3 Pro Image)
+      if (modelKey === GenModel.NANO_BANANA_PRO) {
+        const response = await ai.models.generateImages({
+          model: GenModel.NANO_BANANA_PRO,
+          prompt: prompt,
+          config: {
+            numberOfImages: 1,
+            outputMimeType: 'image/jpeg',
+            aspectRatio: '1:1',
+          },
+        });
+        const base64ImageBytes = response.generatedImages?.[0]?.image?.imageBytes;
+        if (base64ImageBytes) {
+          return { code: null, imageUrl: `data:image/jpeg;base64,${base64ImageBytes}` };
+        } else {
+          throw new Error("No image data returned from Nano Banana Pro.");
+        }
+      }
+      // Nano Banana (Gemini 2.5 Flash Image)
       else {
-          const response = await ai.models.generateContent({
-            model: GenModel.FLASH_IMAGE,
-            contents: {
-              parts: [{ text: prompt }],
-            },
-            config: {
-              responseModalities: [Modality.IMAGE],
-            },
-          });
+        const response = await ai.models.generateImages({
+          model: GenModel.NANO_BANANA,
+          prompt: prompt,
+          config: {
+            numberOfImages: 1,
+            outputMimeType: 'image/jpeg',
+            aspectRatio: '1:1',
+          },
+        });
 
-          const part = response.candidates?.[0]?.content?.parts?.[0];
-          if (part && part.inlineData) {
-            const base64ImageBytes = part.inlineData.data;
-            const mimeType = part.inlineData.mimeType || 'image/png';
-            return { 
-              code: null, 
-              imageUrl: `data:${mimeType};base64,${base64ImageBytes}` 
-            };
-          } else {
-            throw new Error("No image data returned.");
-          }
+        const base64ImageBytes = response.generatedImages?.[0]?.image?.imageBytes;
+        if (base64ImageBytes) {
+          return {
+            code: null,
+            imageUrl: `data:image/jpeg;base64,${base64ImageBytes}`
+          };
+        } else {
+          throw new Error("No image data returned from Nano Banana.");
+        }
       }
     }
 
@@ -65,25 +63,25 @@ export const generateContent = async (
     let thinkingBudget = 0;
 
     // Map our internal Enum to actual model strings and thinking configs
-    if (modelKey === GenModel.FLASH_2_5_THINKING) {
-      targetModel = GenModel.FLASH_2_5;
-      thinkingBudget = 2048; // Allocate budget for reasoning about code
+    if (modelKey === GenModel.FLASH_3_0_THINKING) {
+      targetModel = GenModel.PRO_3_0;
+      thinkingBudget = 32768; // High budget for 3.0 Pro thinking
     } else if (modelKey === GenModel.FLASH_LITE) {
-        targetModel = 'gemini-flash-lite-latest' as GenModel;
+      targetModel = GenModel.FLASH_LITE;
     }
 
-    // If user selected an image model but is in Code mode, fallback to Flash 2.5
-    if (modelKey === GenModel.FLASH_IMAGE || modelKey === GenModel.IMAGEN_4) {
-        targetModel = GenModel.FLASH_2_5;
+    // If user selected an image model but is in Code mode, fallback to Flash 3.0
+    if (modelKey === GenModel.NANO_BANANA || modelKey === GenModel.NANO_BANANA_PRO) {
+      targetModel = GenModel.FLASH_3_0;
     }
 
     const config: any = {
       systemInstruction: SYSTEM_INSTRUCTIONS[mode],
     };
 
-    // Apply thinking if requested (only valid for 2.5 models)
-    if (isThinking || modelKey === GenModel.FLASH_2_5_THINKING) {
-       config.thinkingConfig = { thinkingBudget };
+    // Apply thinking if requested (only valid for 2.5/3.0 models)
+    if (isThinking || modelKey === GenModel.FLASH_3_0_THINKING) {
+      config.thinkingConfig = { thinkingBudget };
     }
 
     const response = await ai.models.generateContent({
@@ -111,13 +109,13 @@ export const refineContent = async (
 ): Promise<{ code: string | null; error?: string }> => {
   try {
     let targetModel = modelKey;
-    
+
     // Fallback to standard flash if thinking was used, 
     // or keep same model. Refinement usually good with standard flash or pro.
-    if (modelKey === GenModel.FLASH_2_5_THINKING) {
-      targetModel = GenModel.FLASH_2_5;
+    if (modelKey === GenModel.FLASH_3_0_THINKING) {
+      targetModel = GenModel.PRO_3_0;
     } else if (modelKey === GenModel.FLASH_LITE) {
-      targetModel = 'gemini-flash-lite-latest' as GenModel;
+      targetModel = GenModel.FLASH_LITE;
     }
 
     // Construct a prompt that includes the code context

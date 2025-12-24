@@ -12,12 +12,12 @@ export enum ExecutionStrategy {
 }
 
 export enum GenModel {
-  FLASH_LITE = 'gemini-flash-lite-latest', // Mapped internally
-  FLASH_2_5 = 'gemini-2.5-flash',
-  FLASH_2_5_THINKING = 'gemini-2.5-flash-thinking', // Custom key for logic handling
-  PRO_3_0 = 'gemini-3-pro-preview', // Gemini 3.0 Pro
-  FLASH_IMAGE = 'gemini-2.5-flash-image',
-  IMAGEN_4 = 'imagen-4.0-generate-001', // High Quality Image Gen
+  FLASH_LITE = 'gemini-2.5-flash-lite',
+  FLASH_3_0 = 'gemini-3.0-flash',
+  PRO_3_0 = 'gemini-3.0-pro',
+  FLASH_3_0_THINKING = 'gemini-3.0-pro', // Using 3.0 Pro for thinking
+  NANO_BANANA = 'gemini-2.5-flash-image',
+  NANO_BANANA_PRO = 'gemini-3-pro-image-preview',
 }
 
 export interface GenerationResult {
@@ -52,7 +52,7 @@ export interface AppState {
   rounds: Round[];
   isGenerating: boolean;
   editingResult: { roundId: string; resultId: string } | null;
-  
+
   // Actions
   setTheme: (theme: 'light' | 'dark') => void;
   setPrompt: (prompt: string) => void;
@@ -60,7 +60,7 @@ export interface AppState {
   addRound: (round: Round) => void;
   updateResult: (roundId: string, resultId: string, update: Partial<GenerationResult>) => void;
   toggleVersusModel: (model: GenModel) => void;
-  
+
   // Refinement Actions
   setEditingResult: (ids: { roundId: string; resultId: string } | null) => void;
   runRefinement: (instruction: string) => Promise<void>;
